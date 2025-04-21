@@ -1,26 +1,29 @@
 # Fake-Job-Detector
 
-Fake job listings are becoming more common and can lead to real problems like identity theft or money loss. Job platforms like LinkedIn and Indeed use their own tools to catch scams, but these tools are not public.
+Fake job listings are becoming more common and can lead to serious problems like identity theft or money loss. Job platforms like LinkedIn and Indeed use their own tools to catch scams, but these tools are not public.
 
 This project creates a public tool that lets anyone check if a job post seems suspicious. It uses different models to make predictions and runs through a simple web app that anyone can use.
 
 ## Problem Statement
 
-Scam job listings are hard to spot, especially for people applying to jobs for the first time. This tool gives users a quick way to check a job description and see if it might be fake. It predicts if a listing is real or suspicious based on how it is written.
+Scam job listings are hard to spot, especially for people applying to jobs for the first time. This tool gives users a quick way to check a job description to see if it might be fake. It predicts if a listing is real or suspicious based on how it is written.
 
 ## Dataset
 
-I used the [Fake Job Posting Prediction Dataset](https://www.kaggle.com/datasets/shivamb/real-or-fake-fake-jobposting-prediction) from Kaggle. The dataset has job titles, descriptions and labels that show whether a job is real or fake.
+I used the [Fake Job Posting Prediction Dataset](https://www.kaggle.com/datasets/shivamb/real-or-fake-fake-jobposting-prediction) from Kaggle. The dataset has job titles, descriptions and labels showing whether a job is real or fake.
 
 The dataset is highly imbalanced; only about 5% of the job postings are labeled as fake. To deal with this, I balanced the training data using upsampling before training the classical and deep learning models.
 
 ## Background and Previous Approaches
 
-Fake job posts have been a problem for a while. Many job platforms use their own tools or have people review listings by hand but those tools are not public.
+Fake job posts have been around for a long time. Many platforms rely on in-house tools or manual reviews, but these are not available to the public.
 
 Earlier efforts used basic machine learning models like Naive Bayes, support vector machines and logistic regression. These models looked for red flags like vague descriptions or missing contact details. They worked for some simple scams but struggled with more realistic ones.
 
-In this project, I build on those ideas by comparing three types of models. I include a simple baseline that always predicts "real," a classical model using TF-IDF features with a random forest classifier and a deep learning model using DistilBERT that understands context better than keyword-based models.
+This project builds on those ideas by comparing three types of models:
+- A naive baseline that always predicts “real”
+- A classical model using TF-IDF and a random forest classifier
+- A deep learning model using DistilBERT for better context understanding
 
 The goal is to show how performance improves across these approaches and to make the tool easy for anyone to use through a web app.
 
@@ -32,18 +35,18 @@ I tested three different types of models
 This model predicts that all job listings are real. It sets a simple baseline for performance.
 
 ### 2. Classical Model (Random Forest)
-I use TF-IDF to turn the text into features and then train a random forest classifier. This model works well and is easy to understand.
+Uses TF-IDF to turn text into features, then trains a random forest. This model is fast and easy to interpret.
 
 ### 3. Deep Learning Model (DistilBERT)
-I fine-tuned a DistilBERT model using the balanced dataset. This model understands context and gives strong results, especially for recall.
+Fine-tuned DistilBERT using the balanced dataset. It understands context and performs well, especially on recall.
 
 ## Training Details
 
-The classical and deep learning models were both trained on a balanced dataset. Since fake job listings are much less common than real ones, I used upsampling to give both classes equal weight. For the classical model, I trained a random forest classifier on TF-IDF features. For the deep learning model, I fine-tuned DistilBERT for one epoch using Hugging Face’s Trainer API.
+Both the classical and deep models were trained on a balanced dataset. Since fake jobs are rare, I used upsampling to balance the classes. I trained the random forest on TF-IDF features and fine-tuned DistilBERT for one epoch using Hugging Face’s Trainer API.
 
 ## Evaluation
 
-I evaluated model performance using precision, recall, F1 score and accuracy on the fraudulent class. All metrics shown below refer to how well each model detected fake listings (Class 1).
+Models were evaluated using accuracy, precision, recall and F1 score. The results below focus on the model’s ability to detect fake jobs (Class 1).
 
 ### Model Comparison (Fraud Class)
 
@@ -81,10 +84,9 @@ Then go to:
 
 ## Ethics Statement
 
-This project is meant to help people avoid job scams, but it’s not perfect. It could mark some real jobs as fake or miss some actual scams. The results should help guide decisions but should not be taken as final answers.
+This project is meant to help people avoid scams, but it’s not perfect. It may incorrectly mark a real job as fake or miss an actual scam. The results are meant to guide users, not make final decisions.
 
-I don't collect or store anything users type into the tool. The model was trained using public data and can be updated over time as scams change.
-
+The tool does not collect or store anything users enter. All models were trained on public data and can be retrained in the future as scam patterns evolve.
 
 ```
 Fake-Job-Detector/
@@ -92,10 +94,10 @@ Fake-Job-Detector/
 │   ├── main.py                # FastAPI app UI route
 │   └── templates/index.html
 ├── data/
-│   ├── raw/                   # Raw Kaggle dataset
-│   ├── outputs/               # Model predictions (CSV)
+│   ├── raw/                   # Original dataset
+│   ├── outputs/               # CSV model predictions
 ├── models/
-│   ├── distilbert_balanced/  # Deep model checkpoints
+│   ├── distilbert_balanced/  # Fine-tuned deep model
 │   ├── classical_model_rf.pkl
 │   └── naive_majority_class.pkl
 ├── scripts/
@@ -106,6 +108,6 @@ Fake-Job-Detector/
 │   └── compare_all_models.py
 ├── app.py                    # JSON API route
 ├── README.md                 # Project documentation
-├── .gitignore                # Ignore outputs, raw data, cache
+├── .gitignore                # Ignore files
 ├── requirements.txt          # Python dependencies
 ```
