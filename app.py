@@ -15,8 +15,8 @@ class JobInput(BaseModel):
     model_type: str  # "naive", "classical", "deep"
 
 # Load deep learning model
-tokenizer = DistilBertTokenizer.from_pretrained("export_model")
-deep_model = DistilBertForSequenceClassification.from_pretrained("export_model")
+tokenizer = DistilBertTokenizer.from_pretrained("./export_model", local_files_only=True)
+deep_model = DistilBertForSequenceClassification.from_pretrained("./export_model", local_files_only=True)
 deep_model.eval()
 
 # Init app

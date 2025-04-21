@@ -14,8 +14,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 # === Load Deep Model ===
 deep_model_path = "models/distilbert_balanced"
-tokenizer = DistilBertTokenizer.from_pretrained(deep_model_path)
-deep_model = DistilBertForSequenceClassification.from_pretrained(deep_model_path)
+tokenizer = DistilBertTokenizer.from_pretrained("./models/distilbert_balanced", local_files_only=True)
+deep_model = DistilBertForSequenceClassification.from_pretrained("./models/distilbert_balanced", local_files_only=True)
 deep_model.eval()
 
 # === Route: Home Page ===
