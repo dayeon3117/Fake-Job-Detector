@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fake Job Posting Detector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="flex flex-col items-center space-y-8">
+        <h1 class="text-3xl font-bold text-center">Fake Job Posting Detector</h1>
+
+        <form method="post" class="bg-white p-10 rounded-2xl shadow-lg w-[1000px] flex justify-between gap-6">
+            <!-- Left side: Textarea -->
+            <textarea 
+                name="job_description" 
+                rows="16" 
+                placeholder="Paste job description here..." 
+                class="p-4 border border-blue-500 rounded-md w-[65%] resize-none"
+                required
+            ></textarea>
+
+            <!-- Right side: Text + Button -->
+            <div class="flex flex-col justify-between w-[30%]">
+                <div class="mb-6 text-gray-700 font-semibold leading-snug">
+                    This app checks your input using <span class="text-blue-600 font-bold">three models</span>:  
+                    <ul class="list-disc list-inside mt-2 space-y-1 text-sm text-gray-600">
+                        <li>Deep Learning (DistilBERT)</li>
+                        <li>Classical ML (Random Forest)</li>
+                        <li>Naive Keyword-Based Model</li>
+                    </ul>
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-blue-700 w-full"
+                >
+                    Check
+                </button>
+            </div>
+        </form>
+
+        {% if deep_result %}
+        <div class="bg-white p-6 rounded-xl shadow-md w-[1000px] mt-4">
+            <h2 class="text-xl font-semibold mb-4">Predictions:</h2>
+            <ul class="mb-4 space-y-1">
+                <li><strong>Deep Learning (DistilBERT):</strong>
+                    <span class="{% if deep_result == 'Suspicious' %}text-red-600{% else %}text-blue-600{% endif %} font-bold">
+                        {{ deep_result }}
+                    </span>                    
+                </li>
+                <li><strong>Classical ML (Random Forest):</strong>
+                    <span class="{% if classical_result == 'Suspicious' %}text-red-600{% else %}text-blue-600{% endif %} font-bold">
+                        {{ classical_result }}
+                    </span>                    
+                </li>
+                <li><strong>Naive Model:</strong>
+                    <span class="{% if naive_result == 'Suspicious' %}text-red-600 font-bold{% else %}text-blue-600 font-bold{% endif %}">
+                        {{ naive_result }}
+                    </span>                    
+                </li>
+            </ul>
+            <p><strong>Input:</strong> {{ text }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

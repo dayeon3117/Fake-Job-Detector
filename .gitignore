@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# Notebook autosaves
+*.ipynb_checkpoints
+
+# Skip intermediate data
+data/processed/
+
+# Skip model checkpoints
+models/distilbert_balanced/checkpoint-*/
+
