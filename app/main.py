@@ -19,12 +19,12 @@ MODEL_DIR = "models/distilbert_balanced"
 
 # === Download model from Hugging Face if not exists ===
 if not os.path.exists(MODEL_DIR):
-    print("Logging in to Hugging Face...") 
+    print("Logging in to Hugging Face...")
     login(token=HF_TOKEN)
 
     print("Downloading model zip from Hugging Face...")
     zip_path = hf_hub_download(repo_id=REPO_ID, filename=ZIP_FILENAME, repo_type="model")
-    
+
     print("Extracting model zip...")
     os.makedirs(MODEL_DIR, exist_ok=True)
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
