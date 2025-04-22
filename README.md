@@ -1,6 +1,6 @@
 # Fake-Job-Detector
 
-Fake job listings are becoming more common and can lead to serious problems like identity theft or money loss. Job platforms like LinkedIn and Indeed use their own tools to catch scams, but these tools are not public.
+Fake job listings are becoming more common and can lead to serious problems like identity theft or money loss. Job platforms like LinkedIn and Indeed use their own tools to catch scams, but these tools are not available to public.
 
 This project creates a public tool that lets anyone check if a job post seems suspicious. It uses different models to make predictions and runs through a simple web app that anyone can use.
 
@@ -14,16 +14,16 @@ I used the [Fake Job Posting Prediction Dataset](https://www.kaggle.com/datasets
 
 The dataset is highly imbalanced; only about 5% of the job postings are labeled as fake. To deal with this, I balanced the training data using upsampling before training the classical and deep learning models.
 
-## Background and Previous Approaches
+## Previous Approaches
 
-Fake job posts have been around for a long time. Many platforms rely on in-house tools or manual reviews, but these are not available to the public.
+Fake job posts have been around for a long time. Most earlier work used keyword filters or classical models like Naive Bayes or logistic regression. These models looked for red flags like vague descriptions or missing contact details. They worked for some simple scams but struggled with more realistic and subtle ones.
 
-Earlier efforts used basic machine learning models like Naive Bayes, support vector machines and logistic regression. These models looked for red flags like vague descriptions or missing contact details. They worked for some simple scams but struggled with more realistic ones.
+Some research explored spam filters or phishing detection applied to job listings, but they typically relied on rule based or classical ML techniques and didn’t take advantage of deep learning models.
 
-This project builds on those ideas by comparing three types of models:
+So, this project builds on those ideas by comparing three types of models:
 - A naive baseline that always predicts “real”
-- A classical model using TF-IDF and a random forest classifier
-- A deep learning model using DistilBERT for better context understanding
+- A classical model using TF-IDF with a Random Forest
+- A deep learning model using DistilBERT fine-tuned on the job descriptions
 
 The goal is to show how performance improves across these approaches and to make the tool easy for anyone to use through a web app.
 
@@ -32,13 +32,13 @@ The goal is to show how performance improves across these approaches and to make
 I tested three different types of models
 
 ### 1. Naive Model
-This model predicts that all job listings are real. It sets a simple baseline for performance.
+This model always predicts the majority class "real." It sets a simple baseline for performance.
 
 ### 2. Classical Model (Random Forest)
 Uses TF-IDF to turn text into features, then trains a random forest. This model is fast and easy to interpret.
 
 ### 3. Deep Learning Model (DistilBERT)
-Fine-tuned DistilBERT using the balanced dataset. It understands context and performs well, especially on recall.
+Fine-tuned DistilBERT using the balanced dataset. It understands context and performs better on subtle or tricky scams.
 
 ## Training Details
 
@@ -46,7 +46,7 @@ Both the classical and deep models were trained on a balanced dataset. Since fak
 
 ## Evaluation
 
-Models were evaluated using accuracy, precision, recall and F1 score. The results below focus on the model’s ability to detect fake jobs (Class 1).
+Models were evaluated using accuracy, precision, recall and F1 score. The results are shown below
 
 ### Model Comparison (Fraud Class)
 
@@ -56,18 +56,39 @@ Models were evaluated using accuracy, precision, recall and F1 score. The result
 | **Classical**      | 0.9991    | 1.0000 | 0.9996   | 0.9996   |
 | **Deep**           | 0.7085    | 0.9615 | 0.8159   | 0.9779   |
 
-Note: Scores reflect performance on fake (fraudulent) job posts only
+Note: Scores reflect performance on fake job posts only
+
+- Naive: High accuracy but fails completely on fake jobs
+- Classical: Nearly perfect on this test set but may be overfitting
+- Deep: Great recall and solid F1, slightly lower precision but better at generalizing to trickier cases
+
+In practice, the deep model offers the best balance for detecting scams while minimizing false alarms even if it’s not perfect. The classical model performs extremely well on this dataset but might struggle with new or subtle scams. The naive model exists mainly for comparison.
 
 ## Web App
 
-I built the app using FastAPI. It has two ways to use it:
+The app is built with FastAPI and lets you paste a job description to get predictions from all three models. You can try it live here:
+https://fake-job-detector-br91.onrender.com/
 
-- Go to the home page and paste in a job description to get results
-- Use the API to send in descriptions and get predictions in return
+You can also use the API directly by sending a POST request to /predict. It accepts JSON with a job description and a model type (naive, classical, or deep). Only the deep model returns a confidence score.
 
-Each prediction shows  
-- Whether the job looks real or suspicious from all three models 
-- A confidence score for the deep learning model
+Example request:
+```
+POST /predict
+{
+  "description": "Earn $1000/week from home, no experience needed",
+  "model_type": "deep"
+}
+```
+
+### Hugging Face
+
+The deep learning model files are hosted on Hugging Face and downloaded at runtime by the app:
+https://huggingface.co/dayeon3117/fake-job-detector-models/tree/main
+
+The repo includes
+- The final DistilBERT model in a .zip format
+- config.json, vocab.txt, tokenizer files
+- The original Kaggle dataset and prediction outputs for all models
 
 ## Running the App Locally
 
@@ -75,6 +96,7 @@ Each prediction shows
 git clone https://github.com/dayeon3117/Fake-Job-Detector.git
 cd Fake-Job-Detector
 pip install -r requirements.txt
+
 # Run the app locally
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
@@ -82,32 +104,42 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 Then go to:
 [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-## Ethics Statement
+## Ethics and Limitations
 
-This project is meant to help people avoid scams, but it’s not perfect. It may incorrectly mark a real job as fake or miss an actual scam. The results are meant to guide users, not make final decisions.
+This tool is designed to assist, not replace human judgment. While the detector can flag suspicious posts based on patterns in the training data, it may still miss cleverly written scams, especially ones that sound professional or avoid obvious red flags. It can also mislabel short, vague or unusual listings that don’t follow typical job post structures. The classical model may be overfitting to the training data and the deep model, while better at generalizing, is not perfect. Users should treat the results as a helpful signal.
 
-The tool does not collect or store anything users enter. All models were trained on public data and can be retrained in the future as scam patterns evolve.
+The app doesn’t collect or store anything users submit. It runs entirely on public data and all predictions are transparent so users can interpret them however they see fit.
 
 ```
 Fake-Job-Detector/
 ├── app/
-│   ├── main.py                # FastAPI app UI route
-│   └── templates/index.html
+│   ├── templates/
+│   │   └── index.html           # HTML form for submitting job descriptions
+│   ├── main.py                  # FastAPI UI route
 ├── data/
-│   ├── raw/                   # Original dataset
-│   ├── outputs/               # CSV model predictions
+│   ├── raw/
+│   │   └── fake_job_postings.csv      # Original Kaggle dataset (on Hugging Face)
+│   └── outputs/                       # Prediction CSVs from all models (on Hugging Face)
+│       ├── classical_predictions_rf.csv
+│       ├── deep_predictions_balanced.csv
+│       └── naive_predictions.csv
+├── export_model/                # Final Hugging Face-ready DistilBERT model files
+│   ├── config.json
+│   ├── model.safetensors
+│   ├── special_tokens_map.json
+│   ├── tokenizer_config.json
+│   └── vocab.txt
 ├── models/
-│   ├── distilbert_balanced/  # Fine-tuned deep model
 │   ├── classical_model_rf.pkl
-│   └── naive_majority_class.pkl
+│   ├── naive_majority_class.pkl
+│   └── vectorizer_rf.pkl
 ├── scripts/
-│   ├── train_deep_model.py
-│   ├── evaluate_deep_model.py
 │   ├── classical_model_rf.py
+│   ├── compare_all_models.py
+│   ├── evaluate_deep_model.py
 │   ├── naive_model.py
-│   └── compare_all_models.py
-├── app.py                    # JSON API route
-├── README.md                 # Project documentation
-├── .gitignore                # Ignore files
-├── requirements.txt          # Python dependencies
+│   └── train_deep_model.py
+├── app.py                      # FastAPI JSON API 
+├── requirements.txt            # Project dependencies
+├── README.md                   # Project documentation
 ```
