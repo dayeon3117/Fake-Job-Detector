@@ -2,21 +2,43 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
+import os
+import zipfile
 import torch
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from huggingface_hub import hf_hub_download, login
 
 from scripts.classical_model_rf import get_rf_prediction
 from scripts.naive_model import get_naive_prediction
 
-# === Initialize FastAPI and Jinja2 ===
+# === Setup Hugging Face model path ===
+HF_TOKEN = os.getenv("HF_TOKEN")
+REPO_ID = "dayeon3117/fake-job-detector-models"
+ZIP_FILENAME = "distilbert_balanced.zip"
+MODEL_DIR = "models/distilbert_balanced"
+
+# === Download model from Hugging Face if not exists ===
+if not os.path.exists(MODEL_DIR):
+    print("Logging in to Hugging Face...") 
+    login(token=HF_TOKEN)
+
+    print("Downloading model zip from Hugging Face...")
+    zip_path = hf_hub_download(repo_id=REPO_ID, filename=ZIP_FILENAME, repo_type="model")
+    
+    print("Extracting model zip...")
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(MODEL_DIR)
+    print("Model ready at:", MODEL_DIR)
+
+# === Load model + tokenizer ===
+tokenizer = DistilBertTokenizer.from_pretrained(MODEL_DIR, local_files_only=True)
+deep_model = DistilBertForSequenceClassification.from_pretrained(MODEL_DIR, local_files_only=True)
+deep_model.eval()
+
+# === Initialize FastAPI app ===
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
-
-# === Load Deep Model ===
-deep_model_path = "models/distilbert_balanced"
-tokenizer = DistilBertTokenizer.from_pretrained("./models/distilbert_balanced", local_files_only=True)
-deep_model = DistilBertForSequenceClassification.from_pretrained("./models/distilbert_balanced", local_files_only=True)
-deep_model.eval()
 
 # === Route: Home Page ===
 @app.get("/", response_class=HTMLResponse)
@@ -26,14 +48,14 @@ async def home(request: Request):
 # === Route: HTML Form Prediction ===
 @app.post("/", response_class=HTMLResponse)
 async def predict(request: Request, job_description: str = Form(...)):
-    # Deep prediction
+    # Deep model prediction
     deep_inputs = tokenizer(job_description, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
         deep_outputs = deep_model(**deep_inputs)
         deep_pred = torch.argmax(deep_outputs.logits, dim=1).item()
     deep_result = "Suspicious" if deep_pred == 1 else "Real"
 
-    # Random Forest + Naive
+    # Other models
     classical_result = get_rf_prediction(job_description)
     naive_result = get_naive_prediction(job_description)
 
@@ -45,7 +67,7 @@ async def predict(request: Request, job_description: str = Form(...)):
         "text": job_description
     })
 
-# === Route: JSON API ===
+# === Route: JSON API Prediction ===
 @app.post("/api/predict")
 async def api_predict(job_description: str = Form(...)):
     deep_inputs = tokenizer(job_description, return_tensors="pt", truncation=True, padding=True)
